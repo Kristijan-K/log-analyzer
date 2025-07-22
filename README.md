@@ -10,13 +10,13 @@ I suggest you fork this repo and modify it as you wish.
 - lazy example:
 
 ```lua
-{
-    'kkosu/log-analyzer',
-    config = function()
-        require('apex_logs').setup({
-        })
-    end,
-}
+    {
+      'Kristijan-K/log-analyzer',
+      config = function()
+        vim.keymap.set('n', '<leader>xl', '<cmd>SFLogs<CR><CR>', { desc = 'Analyze SF Logs' })
+      end,
+    },
+
 
 ``` 
 
