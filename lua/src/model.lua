@@ -1,0 +1,19 @@
+---@alias DMLBlock { code_row: string, op: string, obj: string, rows: integer, ns: integer, ns2?: integer, ms?: number, log_idx: integer, matched: boolean, rest: string }
+---@alias DMLHighlightSpan { line: integer, from: integer, to: integer }
+---@alias SOQLBlock { code_row: string, soql: string, rows: string, ms: number, group_total: integer, orig_idx: integer, exec_num: integer }
+---@alias SOQLHighlightSpan { line: integer, from: integer, to: integer }
+---@alias UserDebugHighlightSpan { line: integer, from: integer, to: integer }
+---@class TreeNode
+---@field tag string
+---@field name string
+---@field code_row? string
+---@field start_ns number
+---@field end_ns number
+---@field duration number
+---@field children TreeNode[]
+---@field parent? TreeNode
+---@field expanded? boolean
+---@field line_idx integer
+---@field is_dummy? boolean
+---@field soql_count? integer
+---@field dml_count? integer
