@@ -1,4 +1,7 @@
+local utils = require("src.utils")
+local is_timestamped_line = utils.is_timestamped_line
 local M = {}
+
 ---@param lines string[]
 ---@return string[] user_debug_lines, UserDebugHighlightSpan[] highlight_spans
 function M.extract_user_debug_blocks(lines)
