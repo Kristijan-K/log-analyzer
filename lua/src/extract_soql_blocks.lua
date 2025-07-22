@@ -1,9 +1,13 @@
+local utils = require("src.utils")
+local normalize_soql = utils.normalize_soql
+
 local M = {}
 
 ---@param lines string[]
 ---@param sort_mode string
 ---@return string[] soql_lines, SOQLHighlightSpan[] highlight_spans
 function M.extract_soql_blocks(lines, sort_mode)
+	local soql_truncate = utils.get_soql_truncate()
 	local agg = {}
 	local idx_map = {}
 	for idx, line in ipairs(lines) do

@@ -13,7 +13,6 @@ local exception_logic = require("src.extract_exception_blocks")
 local M = {}
 local is_timestamped_line = utils.is_timestamped_line
 local ensure_teal_hl = utils.ensure_teal_hl
-local normalize_soql = utils.normalize_soql
 
 local extract_dml_blocks = dml_logic.extract_dml_blocks
 local extract_exception_blocks = exception_logic.extract_exception_blocks
@@ -23,9 +22,6 @@ local extract_tree_blocks = tree_block_logic.extract_tree_blocks
 local extract_user_debug_blocks = user_debug_logic.extract_user_debug_blocks
 
 local api = vim.api
-
-local soql_truncate = false
-local soql_truncate_where = false
 
 function M.analyzeLogs()
 	ensure_teal_hl()
@@ -155,7 +151,7 @@ function M.analyzeLogs()
 	local node_count_lines, node_count_spans
 
 	local function refresh_node_counts_buf()
-		node_count_lines, node_count_spans = extract_node_counts(tree_roots, soql_truncate, soql_truncate_where)
+		node_count_lines, node_count_spans = extract_node_counts(tree_roots)
 		api.nvim_buf_set_lines(tab_bufs[6], 0, -1, false, node_count_lines)
 		if current_tab == 6 then
 			add_highlights(6)
@@ -376,7 +372,7 @@ function M.analyzeLogs()
 				noremap = true,
 				nowait = true,
 				callback = function()
-					soql_truncate = not soql_truncate
+					utils.set_soql_truncate(not utils.get_soql_truncate())
 					refresh_soql_buf()
 					refresh_tree_buf()
 					refresh_node_counts_buf()
@@ -388,7 +384,7 @@ function M.analyzeLogs()
 				noremap = true,
 				nowait = true,
 				callback = function()
-					soql_truncate = not soql_truncate
+					utils.set_soql_truncate(not utils.get_soql_truncate())
 					refresh_tree_buf()
 					refresh_soql_buf()
 					refresh_node_counts_buf()
@@ -398,7 +394,7 @@ function M.analyzeLogs()
 				noremap = true,
 				nowait = true,
 				callback = function()
-					soql_truncate_where = not soql_truncate_where
+					utils.set_soql_truncate_where(not utils.get_soql_truncate_where())
 					refresh_tree_buf()
 					refresh_node_counts_buf()
 					refresh_node_counts_buf()

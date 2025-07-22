@@ -1,8 +1,12 @@
+local utils = require("src.utils")
+
 local M = {}
 
 ---@param roots TreeNode[]
 ---@return string[]
-function M.extract_node_counts(roots, soql_truncate_flag, soql_truncate_where_flag)
+function M.extract_node_counts(roots)
+	local soql_truncate_flag = utils.get_soql_truncate()
+	local soql_truncate_where_flag = utils.get_soql_truncate_where()
 	local counts = {}
 	local function traverse(node)
 		if node.has_soql_or_dml then

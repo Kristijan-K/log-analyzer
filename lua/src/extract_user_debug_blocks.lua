@@ -1,4 +1,4 @@
-local utils = require("utils")
+local utils = require("src.utils")
 local is_timestamped_line = utils.is_timestamped_line
 local M = {}
 

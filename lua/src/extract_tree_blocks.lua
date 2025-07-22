@@ -1,8 +1,12 @@
+local utils = require("src.utils")
+
 local M = {}
 
 ---@param lines string[]
 ---@return table, TreeNode[]
 function M.extract_tree_blocks(lines)
+	local soql_truncate = utils.get_soql_truncate()
+	local soql_truncate_where = utils.get_soql_truncate_where()
 	local open_close_map = {
 		CODE_UNIT_STARTED = { close = "CODE_UNIT_FINISHED", extract_name = true },
 		METHOD_ENTRY = { close = "METHOD_EXIT", extract_name = true },
