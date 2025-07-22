@@ -1,8 +1,10 @@
 # Apex Log Analyzer
 
-This is a plugin that replicates VSCode's apex log analyzer. It is highly personalised to my needs, but can be used for any purpose.
+This is a plugin that replicates VSCode's apex log analyzer. It is highly personalised to my needs, but it still has a lot of nice featues when workin with Salesforce logs. 
 
-I suggest you fork this repo and modify it as you wish. 
+I suggest you fork this repo and modify it as you wish. It works best when it is highly customized to personal needs. 
+
+It was built using various AI tools as an exercise to see if AI agenets and tools can build personalized apps/extensions. 
 
 ## Installation
 
