@@ -36,12 +36,35 @@ function M.analyzeLogs()
 	local soql_lines, soql_spans = extract_soql_blocks(orig_lines, soql_sort_mode)
 
 	local dml_lines, dml_spans = extract_dml_blocks(orig_lines)
-	local exception_lines = extract_exception_blocks(orig_lines)
+	local exceptions = extract_exception_blocks(orig_lines)
+	local show_soql_in_exceptions = false
 
 	-- Tree state
 	local tree_longest, tree_roots
 	local tree_lines, tree_line_map
 	local hide_empty_nodes = false
+
+	local function render_exceptions()
+		local indexed = {}
+		if #exceptions == 0 then
+			table.insert(indexed, "No exceptions or errors found.")
+		else
+			for i, v in ipairs(exceptions) do
+				local one_line_exception = v.exception:gsub("\n", " ")
+				table.insert(indexed, string.format("%d. %s", i, one_line_exception))
+				if show_soql_in_exceptions then
+					local one_line_soql = v.soql:gsub("\n", " ")
+					table.insert(indexed, string.format("   SOQL: %s", one_line_soql))
+				end
+			end
+		end
+		return indexed
+	end
+
+	local function update_exception_view()
+		local exception_lines = render_exceptions()
+		api.nvim_buf_set_lines(tab_bufs[5], 0, -1, false, exception_lines)
+	end
 
 	local function filter_tree_nodes(nodes)
 		local filtered = {}
@@ -101,9 +124,9 @@ function M.analyzeLogs()
 				)
 			end
 			if (node.own_soql_count and node.own_soql_count > 0) or (node.own_dml_count and node.own_dml_count > 0) then
-				local start_col = #indent + #mark + #node.name + #cr + #soql_dml_info + 1
-				local end_col = start_col + #own_soql_dml_info - 1
-				table.insert(
+			local start_col = #indent + #mark + #node.name + #cr + #soql_dml_info + 1
+			local end_col = start_col + #own_soql_dml_info - 1
+			table.insert(
 					out_highlights,
 					{ line_idx = #out_lines, start_col = start_col, end_col = end_col, hl_group = "ApexLogTeal" }
 				)
@@ -171,7 +194,7 @@ function M.analyzeLogs()
 		elseif i == 4 then
 			api.nvim_buf_set_lines(buf, 0, -1, false, dml_lines)
 		elseif i == 5 then
-			api.nvim_buf_set_lines(buf, 0, -1, false, exception_lines)
+		-- Handled by update_exception_view()
 		elseif i == 6 then
 		-- Handled by refresh_node_counts_buf()
 		else
@@ -182,6 +205,7 @@ function M.analyzeLogs()
 
 	-- Initial call for Node Counts tab
 	refresh_node_counts_buf()
+	update_exception_view()
 
 	api.nvim_buf_set_keymap(tab_bufs[2], "n", "z", "", {
 		noremap = true,
@@ -406,6 +430,16 @@ function M.analyzeLogs()
 				callback = function()
 					hide_empty_nodes = not hide_empty_nodes
 					refresh_tree_buf()
+				end,
+			})
+		elseif i == 5 then
+			-- Exceptions tab: toggle SOQL visibility with 's'
+			api.nvim_buf_set_keymap(buf, "n", "s", "", {
+				noremap = true,
+				nowait = true,
+				callback = function()
+					show_soql_in_exceptions = not show_soql_in_exceptions
+					update_exception_view()
 				end,
 			})
 		end
