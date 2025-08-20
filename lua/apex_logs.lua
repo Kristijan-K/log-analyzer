@@ -557,7 +557,7 @@ function M.diffLogs(args)
 				vim.fn.writefile(tree1_lines, tmp1)
 				vim.fn.writefile(tree2_lines, tmp2)
 
-				vim.cmd("edit " .. tmp1)
+				vim.cmd("tabedit " .. tmp1)
 				vim.cmd("vert diffsplit " .. tmp2)
 
 				local win2_id = vim.api.nvim_get_current_win()
