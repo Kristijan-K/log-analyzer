@@ -181,90 +181,90 @@ function M.analyzeLogs()
 		end
 	end
 
-	local tab_titles = { "User Debug", "Method Tree", "SOQL", "DML", "Exceptions", "Node Counts" }
+		local tab_titles = { "User Debug", "Method Tree", "SOQL", "DML", "Exceptions", "Node Counts" }
 
-	for i, title in ipairs(tab_titles) do
-		local buf = api.nvim_create_buf(false, true)
-		if i == 1 then
-			api.nvim_buf_set_lines(buf, 0, -1, false, user_debug_lines)
-		elseif i == 2 then
+		for i, title in ipairs(tab_titles) do
+			local buf = api.nvim_create_buf(false, true)
+			if i == 1 then
+				api.nvim_buf_set_lines(buf, 0, -1, false, user_debug_lines)
+			elseif i == 2 then
 		-- initial tree view is now handled by switch_tab
-		elseif i == 3 then
-			api.nvim_buf_set_lines(buf, 0, -1, false, soql_lines)
-		elseif i == 4 then
-			api.nvim_buf_set_lines(buf, 0, -1, false, dml_lines)
-		elseif i == 5 then
+			elseif i == 3 then
+				api.nvim_buf_set_lines(buf, 0, -1, false, soql_lines)
+			elseif i == 4 then
+				api.nvim_buf_set_lines(buf, 0, -1, false, dml_lines)
+			elseif i == 5 then
 		-- Handled by update_exception_view()
-		elseif i == 6 then
+			elseif i == 6 then
 		-- Handled by refresh_node_counts_buf()
-		else
-			api.nvim_buf_set_lines(buf, 0, -1, false, { "This is the [" .. title .. "] tab." })
+			else
+				api.nvim_buf_set_lines(buf, 0, -1, false, { "This is the [" .. title .. "] tab." })
+			end
+			tab_bufs[i] = buf
 		end
-		tab_bufs[i] = buf
-	end
 
-	-- Initial call for Node Counts tab
-	refresh_node_counts_buf()
-	update_exception_view()
+		-- Initial call for Node Counts tab
+		refresh_node_counts_buf()
+		update_exception_view()
 
-	api.nvim_buf_set_keymap(tab_bufs[2], "n", "z", "", {
-		noremap = true,
-		nowait = true,
-		callback = function()
-			local win = api.nvim_get_current_win()
-			local cur_line = api.nvim_win_get_cursor(win)[1]
-			local node = tree_line_map[cur_line]
-			if not node or node.is_dummy or not node.children or #node.children == 0 then
-				return
-			end
-			node.expanded = not node.expanded
-			update_tree_view()
-			-- After re-rendering, the cursor might be off. We need to find the new line of the node.
-			for i, n in ipairs(tree_line_map) do
-				if n == node then
-					api.nvim_win_set_cursor(win, { i, 0 })
-					break
-				end
-			end
-		end,
-	})
-
-	api.nvim_buf_set_keymap(tab_bufs[2], "n", "Z", "", {
-		noremap = true,
-		nowait = true,
-		callback = function()
-			local any_collapsed = false
-			local function find_any_collapsed(nodes)
-				for _, node in ipairs(nodes) do
-					if any_collapsed then
+		api.nvim_buf_set_keymap(tab_bufs[2], "n", "z", "", {
+			noremap = true,
+			nowait = true,
+			callback = function()
+					local win = api.nvim_get_current_win()
+					local cur_line = api.nvim_win_get_cursor(win)[1]
+					local node = tree_line_map[cur_line]
+					if not node or node.is_dummy or not node.children or #node.children == 0 then
 						return
-					end
-					if #node.children > 0 and not node.expanded then
-						any_collapsed = true
-						return
-					end
-					if node.children and #node.children > 0 then
-						find_any_collapsed(node.children)
+				end
+				node.expanded = not node.expanded
+				update_tree_view()
+				-- After re-rendering, the cursor might be off. We need to find the new line of the node.
+				for i, n in ipairs(tree_line_map) do
+					if n == node then
+						api.nvim_win_set_cursor(win, { i, 0 })
+						break
 					end
 				end
-			end
-			find_any_collapsed(tree_roots)
+			end,
+		})
 
-			local new_state = any_collapsed
-			local function set_all(nodes, state)
-				for _, node in ipairs(nodes) do
-					if #node.children > 0 then
-						node.expanded = state
-					end
-					if node.children and #node.children > 0 then
-						set_all(node.children, state)
+		api.nvim_buf_set_keymap(tab_bufs[2], "n", "Z", "", {
+			noremap = true,
+			nowait = true,
+			callback = function()
+					local any_collapsed = false
+					local function find_any_collapsed(nodes)
+						for _, node in ipairs(nodes) do
+							if any_collapsed then
+								return
+							end
+							if #node.children > 0 and not node.expanded then
+								any_collapsed = true
+								return
+							end
+							if node.children and #node.children > 0 then
+								find_any_collapsed(node.children)
+							end
+						end
+				end
+				find_any_collapsed(tree_roots)
+
+				local new_state = any_collapsed
+				local function set_all(nodes, state)
+					for _, node in ipairs(nodes) do
+						if #node.children > 0 then
+							node.expanded = state
+						end
+						if node.children and #node.children > 0 then
+							set_all(node.children, state)
+						end
 					end
 				end
-			end
-			set_all(tree_roots, new_state)
-			update_tree_view()
-		end,
-	})
+				set_all(tree_roots, new_state)
+				update_tree_view()
+			end,
+		})
 
 	-- Floating window setup
 	local width = math.floor(vim.o.columns * 0.95)
@@ -444,6 +444,154 @@ function M.analyzeLogs()
 			})
 		end
 	end
+end
+
+local function generate_tree_for_diff(lines)
+	local tree_longest, tree_roots = extract_tree_blocks(lines)
+	local out_lines = {}
+
+	local function render(node, depth)
+		local indent = string.rep(" ", depth)
+		local mark = (#node.children > 0) and "▼ " or "  "
+		local cr = node.code_row and (" [" .. node.code_row .. "]") or ""
+		local soql_dml_info = ""
+		if (node.soql_count and node.soql_count > 0) or (node.dml_count and node.dml_count > 0) then
+			soql_dml_info = string.format(" (SOQL:%d DML:%d)", node.soql_count or 0, node.dml_count or 0)
+		end
+		local own_soql_dml_info = ""
+		if (node.own_soql_count and node.own_soql_count > 0) or (node.own_dml_count and node.own_dml_count > 0) then
+			own_soql_dml_info =
+				string.format(" (SOQL:%d DML:%d)", node.own_soql_count or 0, node.own_dml_count or 0)
+		end
+
+		local line = indent
+			.. mark
+			.. node.name
+			.. cr
+			.. soql_dml_info
+			.. own_soql_dml_info
+			.. string.format(" | %.2fms", node.duration)
+
+		table.insert(out_lines, line)
+		if node.children then
+			for _, child in ipairs(node.children) do
+				render(child, depth + 1)
+			end
+		end
+	end
+
+	if #tree_longest > 0 then
+		for _, l in ipairs(tree_longest) do
+			table.insert(out_lines, l)
+		end
+		table.insert(out_lines, "---- 10 Longest Operations ----")
+	end
+	for _, n in ipairs(tree_roots) do
+		render(n, 0)
+	end
+
+	if #out_lines == 0 then
+		table.insert(out_lines, "No method stack information found.")
+	end
+
+	return out_lines
+end
+
+function M.diffLogs(args)
+	local file1
+	if #args.fargs == 1 then
+		file1 = args.fargs[1]
+	elseif #args.fargs == 0 then
+		file1 = vim.api.nvim_buf_get_name(0)
+	else
+		vim.notify("SFDiff takes 0 or 1 argument.", vim.log.levels.ERROR)
+		return
+	end
+
+	local has_telescope, telescope = pcall(require, "telescope")
+	if not has_telescope then
+		vim.notify("telescope.nvim is required for this feature.", vim.log.levels.ERROR)
+		return
+	end
+
+	local actions = require("telescope.actions")
+	local action_state = require("telescope.actions.state")
+
+	vim.notify("Select the second file to diff against.")
+	require("telescope.builtin").find_files({
+		prompt_title = "Diff against...",
+		attach_mappings = function(prompt_bufnr, map)
+			actions.select_default:replace(function()
+				actions.close(prompt_bufnr)
+				local selection = action_state.get_selected_entry()
+				if not selection then
+					return
+				end
+				local file2 = selection.path
+
+				-- The diff logic starts here
+				local f1_content_result = io.open(file1, "r")
+				if not f1_content_result then
+					vim.notify("Could not read file: " .. file1, vim.log.levels.ERROR)
+					return
+				end
+				local f1_content = f1_content_result:read("*a")
+				f1_content_result:close()
+				local f1_lines = vim.split(f1_content, "\n")
+
+				local f2_content_result = io.open(file2, "r")
+				if not f2_content_result then
+					vim.notify("Could not read file: " .. file2, vim.log.levels.ERROR)
+					return
+				end
+				local f2_content = f2_content_result:read("*a")
+				f2_content_result:close()
+				local f2_lines = vim.split(f2_content, "\n")
+
+				local tree1_lines = generate_tree_for_diff(f1_lines)
+				local tree2_lines = generate_tree_for_diff(f2_lines)
+
+				local tmp1 = vim.fn.tempname()
+				local tmp2 = vim.fn.tempname()
+
+				vim.fn.writefile(tree1_lines, tmp1)
+				vim.fn.writefile(tree2_lines, tmp2)
+
+				vim.cmd("edit " .. tmp1)
+				vim.cmd("vert diffsplit " .. tmp2)
+
+				local win2_id = vim.api.nvim_get_current_win()
+				vim.cmd("wincmd p")
+				local win1_id = vim.api.nvim_get_current_win()
+				vim.cmd("wincmd p")
+
+				local bufnr1 = vim.fn.bufnr(tmp1)
+				local bufnr2 = vim.fn.bufnr(tmp2)
+
+				local callback = function()
+					if vim.api.nvim_win_is_valid(win1_id) then
+						vim.api.nvim_win_close(win1_id, true)
+					end
+					if vim.api.nvim_win_is_valid(win2_id) then
+						vim.api.nvim_win_close(win2_id, true)
+					end
+				end
+
+				vim.api.nvim_buf_set_keymap(bufnr1, "n", "q", "", { noremap = true, silent = true, callback = callback })
+				vim.api.nvim_buf_set_keymap(bufnr2, "n", "q", "", { noremap = true, silent = true, callback = callback })
+
+				local cleanup_group = vim.api.nvim_create_augroup("CleanupDiffs", { clear = true })
+				vim.api.nvim_create_autocmd("BufWipeout", {
+					pattern = { tmp1, tmp2 },
+					group = cleanup_group,
+					callback = function(event)
+						vim.fn.delete(event.file)
+					end,
+				})
+			end)
+			return true
+		end,
+	})
 end
 
 return M
