@@ -16,6 +16,7 @@ It was built using various AI tools as an exercise to see if AI agenets and tool
       'Kristijan-K/log-analyzer',
       config = function()
         vim.keymap.set('n', '<leader>xl', '<cmd>SFLogs<CR>', { desc = 'Analyze SF Logs' })
+        vim.keymap.set('n', '<leader>xd', '<cmd>SFDiff<CR>', { desc = 'Diff SF Logs' })
       end,
     },
 
