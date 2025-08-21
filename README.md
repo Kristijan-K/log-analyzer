@@ -35,6 +35,8 @@ The log analyzer is organized into several tabs, each providing a different view
 -   **Exceptions:** Displays any exceptions that occurred during the execution. This is crucial for debugging errors.
 -   **Node Counts:** Shows a count of how many times each method or code unit appears in the execution tree, which can help identify frequently executed code paths.
 
+SF Diff viewer can be invoked by uisng a command :SFDiff. It should be run on two buffers that contain Salesforce Apex Log file. One buffer should be the base log (current buffer), and the other should be the target log (selected via Telescope).
+
 ## Keybindings
 
 ### Global
@@ -61,6 +63,13 @@ The log analyzer is organized into several tabs, each providing a different view
 -   `t`: Toggle truncation of SOQL queries.
 -   `T`: Toggle truncation of the `WHERE` clause in SOQL queries.
 
+### Exceptions Tab
+
+-   `s`: Toggle the display of last SOQL query.
+
+### Diff viewer
+
+-   `q`: Close the diff viewer.
 
 ## Issues
 
