@@ -43,6 +43,7 @@ function M.analyzeLogs()
 	local tree_longest, tree_roots
 	local tree_lines, tree_line_map
 	local hide_empty_nodes = false
+	local show_top_10_operations = false
 
 	local function render_exceptions()
 		local indexed = {}
@@ -139,17 +140,26 @@ function M.analyzeLogs()
 			end
 		end
 
-		if #tree_longest > 0 then
+		-- Always show method tree
+		for _, n in ipairs(tree_roots) do
+			render(n, 0)
+		end
+
+		-- Conditionally show top 10 longest operations
+		if show_top_10_operations and #tree_longest > 0 then
+			table.insert(out_lines, "")
+			table.insert(out_lines, "---- 10 Longest Operations ----")
+			table.insert(out_map, { is_dummy = true })
 			for _, l in ipairs(tree_longest) do
 				table.insert(out_lines, l)
 				table.insert(out_map, { is_dummy = true })
 			end
-			table.insert(out_lines, "---- 10 Longest Operations ----")
+		elseif not show_top_10_operations then
+			table.insert(out_lines, "")
+			table.insert(out_lines, "Top 10 Longest Operations are hidden. Press S to show.")
 			table.insert(out_map, { is_dummy = true })
 		end
-		for _, n in ipairs(tree_roots) do
-			render(n, 0)
-		end
+
 		if #out_lines == 0 then
 			table.insert(out_lines, "No method stack information found.")
 			table.insert(out_map, {})
@@ -432,6 +442,17 @@ function M.analyzeLogs()
 					refresh_tree_buf()
 				end,
 			})
+			if i == 2 then
+				-- Method Tree tab: toggle top 10 longest operations visibility with 'S'
+				api.nvim_buf_set_keymap(buf, "n", "S", "", {
+					noremap = true,
+					nowait = true,
+					callback = function()
+						show_top_10_operations = not show_top_10_operations
+						update_tree_view()
+					end,
+				})
+			end
 		elseif i == 5 then
 			-- Exceptions tab: toggle SOQL visibility with 's'
 			api.nvim_buf_set_keymap(buf, "n", "s", "", {

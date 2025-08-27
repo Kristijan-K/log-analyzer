@@ -52,6 +52,7 @@ SF Diff viewer can be invoked by uisng a command :SFDiff. It should be run on tw
 -   `t`: Toggle truncation of SOQL queries within the tree.
 -   `T`: Toggle truncation of the `WHERE` clause in SOQL queries within the tree.
 -   `s`: Toggle the display of empty nodes (nodes without SOQL or DML).
+-   `S`: Toggle the display of the top 10 longest operations.
 
 ### SOQL Tab
 
