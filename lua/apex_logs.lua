@@ -501,12 +501,7 @@ local function generate_tree_for_diff(lines)
 		end
 	end
 
-	if #tree_longest > 0 then
-		for _, l in ipairs(tree_longest) do
-			table.insert(out_lines, l)
-		end
-		table.insert(out_lines, "---- 10 Longest Operations ----")
-	end
+
 	for _, n in ipairs(tree_roots) do
 		render(n, 0)
 	end
